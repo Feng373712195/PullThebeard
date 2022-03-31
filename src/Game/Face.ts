@@ -56,7 +56,7 @@ class Face extends egret.Sprite implements FaceInterface{
             const eyeball:egret.Sprite = new egret.Sprite();
 
             // drawing the eyebrow to the face
-            eyebrow.graphics.lineStyle(2,0x000000);
+            eyebrow.graphics.lineStyle(4,0x000000);
             eyebrow.graphics.drawArc(this.faceX - 75/2 + (i * 150/2),this.faceY - 200,10,0,Math.PI,false);
             
             eyebrow.graphics.endFill();
@@ -73,7 +73,7 @@ class Face extends egret.Sprite implements FaceInterface{
 
     private drawMouth(face:egret.Sprite) {
         const mouth:egret.Sprite = new egret.Sprite();
-        mouth.graphics.lineStyle(2,0x000000);
+        mouth.graphics.lineStyle(4,0x000000);
         mouth.graphics.drawArc(this.faceX, this.faceY - 100,20,0,Math.PI,true);
         mouth.graphics.endFill();
         face.addChild(mouth);
@@ -81,7 +81,7 @@ class Face extends egret.Sprite implements FaceInterface{
 
     private drawFaceLine(face:egret.Sprite){
         const faceLine:egret.Sprite = new egret.Sprite()
-        faceLine.graphics.lineStyle(2,0x000000);
+        faceLine.graphics.lineStyle(4,0x000000);
         faceLine.graphics.drawCircle(this.faceX,this.faceY,250);
         faceLine.graphics.endFill(); 
         face.addChild(faceLine);
