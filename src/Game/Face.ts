@@ -33,14 +33,17 @@ class Face extends egret.Sprite implements FaceInterface{
         this.openMouthAction = this.openMouthAction.bind(this,face,openMouth)
         const touchBreadEvent = new egret.Event('touchBread');
         // 在脸上画胡子
+        
         const bread = new Bread({ faceX:this.faceX,faceY:this.faceY,touchBreadCb:()=>{
             face.dispatchEvent(touchBreadEvent);
             this.openMouthAction()
         } });
         bread.draw(face);
 
+        this.drawFaceLine(face);
         this.drawEyes(face);
         this.drawMouth(face);
+
         face.touchEnabled = true;
         
         return face;
@@ -50,7 +53,6 @@ class Face extends egret.Sprite implements FaceInterface{
 
         for(let i = 0; i < 2; i++){
             const eyebrow:egret.Sprite = new egret.Sprite();
-            
             const eyeball:egret.Sprite = new egret.Sprite();
 
             // drawing the eyebrow to the face
@@ -77,6 +79,14 @@ class Face extends egret.Sprite implements FaceInterface{
         face.addChild(mouth);
     }
 
+    private drawFaceLine(face:egret.Sprite){
+        const faceLine:egret.Sprite = new egret.Sprite()
+        faceLine.graphics.lineStyle(2,0x000000);
+        faceLine.graphics.drawCircle(this.faceX,this.faceY,250);
+        faceLine.graphics.endFill(); 
+        face.addChild(faceLine);
+    }
+
     private drawOpenMouth():egret.Sprite{
         const openMouth:egret.Sprite = new egret.Sprite();
         openMouth.graphics.lineStyle(2,0x000000);
@@ -88,10 +98,7 @@ class Face extends egret.Sprite implements FaceInterface{
     
     private drawFace():egret.Sprite{
         const face:egret.Sprite = new egret.Sprite();
-        face.graphics.lineStyle(2,0x000000);
-        face.graphics.beginFill(0xffffff);
-        face.graphics.drawCircle(this.faceX,this.faceY,250);
-        face.graphics.endFill();
+        // face.sortableChildren = true;
         face.touchEnabled = true;
 
         return face;
