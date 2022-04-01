@@ -14,7 +14,7 @@ interface BreadParamsInterface<T>{
     touchBreadCb?:()=>void
 }
 
-class Bread extends egret.Sprite implements BreadInterface{
+class Breads extends egret.Sprite implements BreadInterface{
     
     faceX:number = 0;
     faceY:number = 0;
@@ -26,16 +26,18 @@ class Bread extends egret.Sprite implements BreadInterface{
 
         this.faceX = breadParmas.faceX;
         this.faceY = breadParmas.faceY;
+
         if( this.touchBreadCb ){
             this.touchBreadCb = breadParmas.touchBreadCb
         }
     }
 
     private removeBear = (brea:egret.Sprite):Promise<undefined> => {
+
         return new Promise((resolve)=>{
             brea.touchEnabled = false;
             var tw = egret.Tween.get( brea );
-            tw.to( {y:50}, 500 )
+            tw.to( {y: brea.y + 50 }, 300 )
             .call( () => {
                 const breaIndex = this.breas.indexOf(brea);
                 // 清除动画
@@ -52,50 +54,82 @@ class Bread extends egret.Sprite implements BreadInterface{
                 resolve();
             });
         })
-    }
 
-    private touchBear = async (brea:egret.Sprite,face:egret.Sprite,event:egret.Event)=> {
-        //  小于30个胡子 及时补充
-        if( this.breas.length <= 30 ){
-            
-            const timer = setTimeout(()=>{
-                let i = 0;
-                while(++i < 10){
-                    this.createBear(face);
-                }
-                clearTimeout(timer);
-            })
-        }
-        if( brea.parent ){
-            this.touchBreadCb();
-            // 清除胡子
-            await this.removeBear(brea);
-            // 再重新创建一条新胡子
-            this.createBear(face);
-        }
     }
 
     public draw(face:egret.Sprite){
-
-        const otherBearSkin:egret.Sprite = new egret.Sprite();
-        otherBearSkin.graphics.beginFill(0xf5f5f5);
-        otherBearSkin.graphics.drawArc(this.faceX,this.faceY * 2,250,0,Math.PI,true);
-        otherBearSkin.graphics.endFill();
-        otherBearSkin.scaleY = 0.5;
-        face.addChild(otherBearSkin);
-
-        const beardSkin:egret.Sprite = new egret.Sprite();
-        beardSkin.graphics.beginFill(0xf5f5f5);
-        beardSkin.graphics.drawArc(this.faceX,this.faceY - 2,250,0,Math.PI,false);
-        beardSkin.graphics.endFill();
-        this.drawBears(beardSkin);
-        
-        face.addChild(beardSkin);
-        
+        this.drawBears(face);    
     }
 
+    private drawBear(x:number,y:number,face:egret.Sprite):egret.Sprite{
+
+        const shp:egret.Sprite = new egret.Sprite(); 
+        console.log(x,y,this.faceX,this.faceY)
+
+        shp.x = x;
+        shp.y = y;
+        shp.anchorOffsetX = x;
+        shp.anchorOffsetY = y;        
+        const breadAngle = Math.atan2(this.faceY * 0.5 - y,this.faceX - x) * 180 / Math.PI;
+ 
+        shp.rotation = breadAngle - 90;
+        // 测试查看点击范围
+        // shp.graphics.lineStyle(2,0x000000);
+        shp.graphics.beginFill(0x000000,0);
+        shp.graphics.drawCircle(x,y - 5,20);
+        shp.zIndex = 99;
+        shp.graphics.endFill();
+                       
+        shp.touchEnabled = true;
+
+        const line = new egret.Shape();
+        line.x = x;
+        line.y = y;
+        line.anchorOffsetX = x;
+        line.anchorOffsetY = y; 
+        line.graphics.lineStyle( 4, 0x696969 );
+        line.graphics.moveTo(x,y - 7)
+        line.scaleY = 0;
+        var tw = egret.Tween.get(line);
+        tw.to( { scaleY:1 }, 300, egret.Ease.backInOut)
+        line.graphics.lineTo(x,y)
+        line.graphics.endFill();
+
+
+        shp.addChild(line);
+        shp.addEventListener(egret.TouchEvent.TOUCH_TAP,this.touchBear.bind(this,shp,face),shp)
+        shp.addEventListener(egret.TouchEvent.TOUCH_MOVE,this.touchBear.bind(this,shp,face),shp)
+        
+        return shp;
+    }
+    
+    private touchBear = async (brea:egret.Sprite,face:egret.Sprite,event:egret.Event)=> {
+        //  小于30个胡子 及时补充
+        if( this.breas.length <= 30 ){
+            // const timer = setTimeout(()=>{
+            //     let i = 0;
+            //     while(++i < 10){
+            //         this.createBear(face);
+            //     }
+            //     clearTimeout(timer);
+            // })
+        }
+        
+        if( brea.parent ){
+            this.touchBreadCb();
+            // 清除胡子
+            this.removeBear(brea).then(res=>{
+                // 再重新创建一条新胡子
+                this.createBear(face);
+            });
+            this.removeBear(brea)
+            this.createBear(face);
+        }
+    }
+    // https://zhuanlan.zhihu.com/p/447898464 在圆中均匀分布随机点
+    // https://blog.csdn.net/u014028063/article/details/84314780
     private randPoint(r:number,centerX:number,centerY:number,tryCount:number = 0):Array<number>{
-           let theta = 2 * Math.PI * Math.random();
+           let theta = 2 * Math.PI * Math.random();
            let len = Math.sqrt(Math.random()) * r;
            let x = centerX + len * Math.cos(theta); 
            let y = centerY + len * Math.sin(theta);
@@ -106,33 +140,9 @@ class Bread extends egret.Sprite implements BreadInterface{
            return [x,y];
     }
 
-
-    private drawBear(x:number,y:number,face:egret.Sprite):egret.Sprite{
-
-        const shp:egret.Sprite = new egret.Sprite();
-        // 测试查看点击范围
-        // shp.graphics.lineStyle(2,0x000000);
-        shp.graphics.beginFill(0x000000,0);
-        shp.graphics.drawCircle(x >= this.faceX ?  x - 20 : x - 10,y - 25,50)
-
-        const line = new egret.Shape();
-        
-        line.graphics.lineStyle( 2, 0x000000 );
-        line.graphics.moveTo(x,y)
-        line.graphics.lineTo(x >= this.faceX ?  x - 10 : x + 10 ,y - 20 );
-        line.graphics.endFill();
-        shp.zIndex = 99;
-        shp.addChild(line);
-        shp.graphics.endFill();
-        shp.touchEnabled = true;
-        shp.addEventListener(egret.TouchEvent.TOUCH_TAP,this.touchBear.bind(this,shp,face),shp)
-        shp.addEventListener(egret.TouchEvent.TOUCH_MOVE,this.touchBear.bind(this,shp,face),shp)
-        
-        return shp;
-    }
-
     private createBear(face:egret.Sprite){
         const [x,y] = this.randPoint(250,this.faceX,this.faceY);
+
         if( y > this.faceY - BREAS_Y ){
             const brea = this.drawBear(x,y,face);
             this.breas.push(brea);

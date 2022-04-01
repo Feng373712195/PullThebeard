@@ -15,7 +15,7 @@
 		"bin-debug/Main.js",
 		"bin-debug/Platform.js",
 		"bin-debug/ThemeAdapter.js",
-		"bin-debug/Game/Bread.js",
+		"bin-debug/Game/Breads.js",
 		"bin-debug/Game/Face.js",
 		"bin-debug/Game/Game.js",
 		"bin-debug/Game/Menu.js"
