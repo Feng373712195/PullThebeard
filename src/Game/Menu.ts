@@ -58,6 +58,7 @@ class Menu extends egret.Sprite implements MenuInter{
         startBtn.verticalAlign = egret.VerticalAlign.MIDDLE;
         const startGammEvent:egret.Event = new egret.Event('startGame');
         startBtn.addEventListener(egret.TouchEvent.TOUCH_TAP,()=>{
+            SoundManager.getInstance().playButtonSound()
             menu.dispatchEvent(startGammEvent);
         },startBtn)
 
@@ -159,15 +160,14 @@ class Menu extends egret.Sprite implements MenuInter{
         aboutView.addChild(closeAbout);
         
         aboutBtn.addEventListener(egret.TouchEvent.TOUCH_TAP,()=>{
+            SoundManager.getInstance().playButtonSound()
             menu.addChild(aboutView);
         },aboutBtn)
 
         closeAbout.addEventListener(egret.TouchEvent.TOUCH_TAP,()=>{
+            SoundManager.getInstance().playButtonSound()
             menu.removeChild(aboutView);
         },aboutBtn)
-
-
-
 
         return menu;
     }

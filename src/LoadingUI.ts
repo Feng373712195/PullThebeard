@@ -32,6 +32,7 @@ class LoadingUI extends egret.Sprite implements RES.PromiseTaskReporter {
     public constructor() {
         super();
         this.createView();
+        SoundManager.getInstance()
     }
 
     private textField: egret.TextField;

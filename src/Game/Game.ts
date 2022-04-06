@@ -1,5 +1,5 @@
-const GAME_TIME_SECOUND = 10;
-const GAME_STORAGE_NAME = 'wuzefeng_game01_recode'
+const GAME_TIME_SECOUND = 15;
+const GAME_STORAGE_NAME = 'gameScoreRecode'
 
 interface GameInterface {
     stageW:number,
@@ -27,6 +27,10 @@ class Game extends egret.Sprite implements GameInterface {
     firstPlay:boolean = true;
     // 计时器
     timer:number = null;
+
+
+    expressionScore:number = 0;
+    useTime:number = 0 
     
     constructor(stageW,stageH){
         super();
@@ -58,13 +62,15 @@ class Game extends egret.Sprite implements GameInterface {
         const backBtn :egret.TextField = new egret.TextField();
         backBtn.size = 30;
         backBtn.textColor = 0x000000;
-        backBtn.text = 'back';
+        backBtn.text = '返回';
         gameView.addChild(backBtn);
         backBtn.y = 40;
         backBtn.x = 80;
         backBtn.touchEnabled = true;
+        
 
         backBtn.addEventListener(egret.TouchEvent.TOUCH_TAP,()=>{
+            SoundManager.getInstance().playButtonSound()
             gameView.dispatchEvent(backMenuEvent);
         },backBtn)
 
@@ -83,6 +89,7 @@ class Game extends egret.Sprite implements GameInterface {
             this.timer = setTimeout(()=>{
                 if(this.gameTime !== 0){
                     gameSecound.text = (--this.gameTime) + '';
+                    ++this.useTime
                     if( this.gameTime === 0 ){
                          emit();
                          return;
@@ -98,6 +105,10 @@ class Game extends egret.Sprite implements GameInterface {
         }
 
         gameView.addEventListener('startGame',()=>{
+            faceView.touchChildren = true;
+            faceView.touchEnabled = true;
+            backBtn.touchEnabled = true;
+
             if( this.firstPlay ){
                 gameTimeOut(timeOutEmit);
                 this.firstPlay = false;
@@ -112,17 +123,49 @@ class Game extends egret.Sprite implements GameInterface {
         scoreText.size = 30;
         scoreText.textColor = 0x000000;
         scoreText.text = '得分：' + score;
-        gameView.addChild(scoreText );
+        gameView.addChild(scoreText);
         scoreText.y = 40;
         scoreText.x = this.stageW - 200;
 
         faceView.addEventListener('touchBread',()=>{
-            if( this.playing ){
-                scoreText.text = '得分：' + (++score)
-            }
+            if(!this.playing) return
+            let needClearExpressionScore = false
+            ++this.expressionScore;
+
+            // 增加音效
+            // 奖励分数
+            if(this.useTime === 1){
+                console.log(this.expressionScore)
+                if(this.expressionScore >= 60){
+                    needClearExpressionScore = true
+                    SoundManager.getInstance().playLongShoutSound();
+                    face.shyness();
+                    face.openMouthAction();
+                    this.shakeView(gameView)
+                    this.showText(gameView,'PERFECT',0xCC00FF,0xCC99FF);
+                }
+                else if(this.expressionScore >= 50){
+                    needClearExpressionScore = true
+                    SoundManager.getInstance().playShoutSound();
+                    face.openMouthAction();
+                    this.shakeView(gameView)
+                    this.showText(gameView,'GOOD',0xFA8072,0xFFA500);
+                }
+                // 再加一档nice
+                // 考虑加分数还是加时间 
+                if(needClearExpressionScore) this.expressionScore = 0
+                this.useTime = 0
+            }    
+            scoreText.text = '得分：' + (++score)
         },faceView);
 
         gameView.addEventListener('gameOver',()=>{
+            this.expressionScore = 0
+            this.useTime = 0
+            faceView.touchChildren = false;
+            faceView.touchEnabled = false;
+            backBtn.touchEnabled = false;
+
             resultView.changeScore(score);
             gameView.addChild(resultView.view);
 
@@ -139,6 +182,12 @@ class Game extends egret.Sprite implements GameInterface {
         },gameView)
 
         gameView.addEventListener('restart',()=>{
+            this.expressionScore = 0
+            this.useTime = 0
+            faceView.touchChildren = true;
+            faceView.touchEnabled = true;
+            backBtn.touchEnabled = true;
+
             clearTimeout(this.timer);
             this.gameTime = GAME_TIME_SECOUND;
             score = 0;
@@ -213,6 +262,7 @@ class Game extends egret.Sprite implements GameInterface {
         restartBtn.textAlign = egret.HorizontalAlign.CENTER;
 
         restartBtn.addEventListener(egret.TouchEvent.TOUCH_TAP,()=>{
+            SoundManager.getInstance().playButtonSound()
             restartCb && restartCb.bind(this)();
         },restartBtn)
 
@@ -221,6 +271,7 @@ class Game extends egret.Sprite implements GameInterface {
         backMenu.textAlign = egret.HorizontalAlign.CENTER;
 
         backMenu.addEventListener(egret.TouchEvent.TOUCH_TAP,()=>{
+            SoundManager.getInstance().playButtonSound()
             backMenuCb && backMenuCb.bind(this)();
         },backMenu)
 
@@ -232,5 +283,38 @@ class Game extends egret.Sprite implements GameInterface {
                 gameResult.text = '你的得分是：' + score
             }
         }
+    }
+
+    shakeView(view:egret.Sprite){
+        egret.Tween.get(view)
+        .to({ x:-2 },50,egret.Ease.cubicInOut)
+        .to({ x:2 },50,egret.Ease.cubicInOut)
+        .to({ x:-2 },50,egret.Ease.cubicInOut)
+        .to({ x:0 },50,egret.Ease.cubicInOut)
+    }
+
+    showText(view:egret.Sprite,str:string,color:number,strokeColor:number){
+        const text:egret.TextField = new egret.TextField;
+        
+        text.y = this.stageH * 0.28;
+
+        text.width = this.stageW;
+        text.height = 50;
+        text.textAlign = egret.HorizontalAlign.CENTER;
+        text.verticalAlign = egret.VerticalAlign.MIDDLE;
+        
+        text.textColor = color;
+        text.text = str
+        text.size = 50;
+
+        text.strokeColor = strokeColor;
+        text.stroke = 4;
+        text.alpha = 0;
+        view.addChild(text);
+        
+        egret.Tween.get(text)
+        .to({ alpha:1,y:this.stageH * 0.25 },300)
+        .wait(200)
+        .to({ alpha:0,y:this.stageH * 0.23 },300)
     }
 }
