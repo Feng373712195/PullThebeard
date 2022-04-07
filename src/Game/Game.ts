@@ -27,8 +27,7 @@ class Game extends egret.Sprite implements GameInterface {
     firstPlay:boolean = true;
     // 计时器
     timer:number = null;
-
-
+    
     expressionScore:number = 0;
     useTime:number = 0 
     
@@ -80,7 +79,6 @@ class Game extends egret.Sprite implements GameInterface {
         gameSecound.text = GAME_TIME_SECOUND + '';
         gameSecound.textColor = 0x000000;
         gameView.addChild(gameSecound);
-        
         gameSecound.y = this.stageH/2 - 400;
         gameSecound.width = this.stageW;
         gameSecound.textAlign = egret.HorizontalAlign.CENTER;
@@ -104,60 +102,83 @@ class Game extends egret.Sprite implements GameInterface {
             gameView.dispatchEvent(gameOverEvent);
         }
 
-        gameView.addEventListener('startGame',()=>{
-            faceView.touchChildren = true;
-            faceView.touchEnabled = true;
-            backBtn.touchEnabled = true;
-
-            if( this.firstPlay ){
-                gameTimeOut(timeOutEmit);
-                this.firstPlay = false;
-                return;
-            }
-            gameView.dispatchEvent(restartEvent);
-        },gameView);
-        
         // 剩余秒数         
         let score:number = 0;
         const scoreText :egret.TextField = new egret.TextField();
         scoreText.size = 30;
         scoreText.textColor = 0x000000;
         scoreText.text = '得分：' + score;
-        gameView.addChild(scoreText);
         scoreText.y = 40;
         scoreText.x = this.stageW - 200;
+        gameView.addChild(scoreText);
 
-        faceView.addEventListener('touchBread',()=>{
+        const reset = ()=>{
+            this.expressionScore = 0
+            this.useTime = 0
+            faceView.touchChildren = true;
+            faceView.touchEnabled = true;
+            backBtn.touchEnabled = true;
+
+            clearTimeout(this.timer);
+            this.gameTime = GAME_TIME_SECOUND;
+            score = 0;
+            scoreText.text = '得分：' + score;
+            gameSecound.text = this.gameTime + '';
+            resultView.changeScore(0);
+            if( resultView.view.parent ){
+                resultView.view.parent.removeChild(resultView.view);
+            }
+            this.playing = true;
+            gameTimeOut(timeOutEmit);
+        }
+
+        const perfectText =  this.showText(gameView,'PERFECT',0xCC00FF,0xCC99FF);
+        const goodText =  this.showText(gameView,'GOOD',0xFA8072,0xFFA500);
+        const niceText = this.showText(gameView,'NICE',0x00BFFF,0x87CEFA);
+
+        const touchBread =  (event:egret.Event) => {
             if(!this.playing) return
+            let reward = 0
             let needClearExpressionScore = false
-            ++this.expressionScore;
-
-            // 增加音效
-            // 奖励分数
+            this.expressionScore += event.data;
             if(this.useTime === 1){
-                console.log(this.expressionScore)
-                if(this.expressionScore >= 60){
+                if(this.expressionScore >= 90){
+                    reward = 20
                     needClearExpressionScore = true
                     SoundManager.getInstance().playLongShoutSound();
                     face.shyness();
                     face.openMouthAction();
                     this.shakeView(gameView)
-                    this.showText(gameView,'PERFECT',0xCC00FF,0xCC99FF);
+                    perfectText.show()
                 }
-                else if(this.expressionScore >= 50){
+                else if(this.expressionScore >= 80){
+                    reward = 15
                     needClearExpressionScore = true
                     SoundManager.getInstance().playShoutSound();
                     face.openMouthAction();
                     this.shakeView(gameView)
-                    this.showText(gameView,'GOOD',0xFA8072,0xFFA500);
+                    goodText.show()
                 }
-                // 再加一档nice
-                // 考虑加分数还是加时间 
+                else if(this.expressionScore >= 70){
+                    reward = 10
+                    needClearExpressionScore = true
+                    SoundManager.getInstance().playShoutSound();
+                    face.openMouthAction();
+                    niceText.show();
+                }
+                console.log(this.expressionScore)
                 if(needClearExpressionScore) this.expressionScore = 0
                 this.useTime = 0
-            }    
-            scoreText.text = '得分：' + (++score)
-        },faceView);
+            }   
+            score += event.data
+            scoreText.text = '得分：' + (score + reward)
+        }
+
+        gameView.addEventListener('startGame',reset,gameView);
+
+        gameView.addEventListener('restart',reset,gameView);
+
+        faceView.addEventListener('touchBread',touchBread,faceView);
 
         gameView.addEventListener('gameOver',()=>{
             this.expressionScore = 0
@@ -180,28 +201,12 @@ class Game extends egret.Sprite implements GameInterface {
             }
             
         },gameView)
-
-        gameView.addEventListener('restart',()=>{
-            this.expressionScore = 0
-            this.useTime = 0
-            faceView.touchChildren = true;
-            faceView.touchEnabled = true;
-            backBtn.touchEnabled = true;
-
-            clearTimeout(this.timer);
-            this.gameTime = GAME_TIME_SECOUND;
-            score = 0;
-            scoreText.text = '得分：' + score;
-            gameSecound.text = this.gameTime + '';
-            gameTimeOut(timeOutEmit);
-            resultView.changeScore(0);
-            this.playing = true;
-            if( resultView.view.parent ){
-                resultView.view.parent.removeChild(resultView.view);
-            }
-        },gameView);
+        
 
         gameView.addChild(faceView);
+
+        // const intoRankView = this.drawIntoRankView();
+        // gameView.addChild(intoRankView.view);
 
         return gameView;
     }
@@ -285,11 +290,116 @@ class Game extends egret.Sprite implements GameInterface {
         }
     }
 
+    drawIntoRankView(){
+
+        // 最终得分
+        const mask:egret.Sprite = new egret.Sprite();
+        mask.zIndex = 999;
+        mask.graphics.beginFill(0x000000,0.4);
+        mask.graphics.drawRect(0,0,this.stageW,this.stageH);
+        mask.graphics.endFill();
+
+        const view:egret.Sprite = new egret.Sprite(); 
+        view.graphics.lineStyle(5,0x000000);
+        view.graphics.beginFill(0xffffff);
+        view.graphics.drawRoundRect(0,0,500,500,20,20);
+        view.x = this.stageW/2 - 500/2;
+        view.y = this.stageH/2 - 500/2;
+        view.graphics.endFill();
+
+        const img = new eui.Image();
+        img.source = "resource/assets/cd.png"
+        img.width = 1028;
+        img.height = 856;
+        img.x = -300;
+        img.y = 130;
+        mask.addChild(img);
+
+        const title:egret.TextField = new egret.TextField();
+        title.textColor = 0x000000
+        title.size = 35;
+        title.text = '进入排行榜啦～'
+        title.width = 500;
+        title.y = 40;
+        title.textAlign = egret.HorizontalAlign.CENTER;
+        view.addChild(title);
+
+        const tips:egret.TextField = new egret.TextField();
+        tips.textColor = 0x000000
+        tips.text = '恭喜你进入排行榜第1名，留下你的名字让更多人来挑战你吧';
+        tips.size = 24;
+        tips.width = 400;
+        tips.y = 120;
+        tips.x = 50;
+        tips.lineSpacing = 10;
+        tips.textAlign = egret.HorizontalAlign.CENTER;
+        view.addChild(tips);
+
+        const inputTips:egret.TextField = new egret.TextField();
+        inputTips.textColor = 0x000000
+        inputTips.text = '请在下面输入框输入你的名称';
+        inputTips.size = 18;
+        inputTips.width = 300;
+        inputTips.y = 230;
+        inputTips.x = 100;
+        inputTips.textAlign = egret.HorizontalAlign.CENTER;
+        view.addChild(inputTips);
+
+        const input = new eui.TextInput();
+        input.skinName = "resource/eui_skins/TextInputSkin.exml";
+        input.prompt = "请输入昵称";
+        input.y = 260;
+        input.x = 50;
+        input.width = 400;
+        input.height = 50;
+        view.addChild(input)
+
+        const validateTips:egret.TextField = new egret.TextField();
+        validateTips.textColor = 0xFF0000
+        validateTips.text = '请在下面输入框输入你的名称';
+        validateTips.size = 18;
+        validateTips.width = 300;
+        validateTips.y = 320;
+        validateTips.x = 100;
+        validateTips.textAlign = egret.HorizontalAlign.CENTER;
+        view.addChild(validateTips);
+
+        const sureBtn:egret.TextField = new egret.TextField();
+        sureBtn.text = '确定'
+        sureBtn.size = 24;
+        sureBtn.textColor = 0x000000
+        sureBtn.width = 100;
+        sureBtn.y = 400;
+        sureBtn.x = 100;
+
+        view.addChild(sureBtn);
+
+        const cancleBtn:egret.TextField = new egret.TextField();
+        cancleBtn.text = '取消'
+        cancleBtn.size = 24;
+        cancleBtn.textColor = 0x000000
+        sureBtn.width = 100;
+        cancleBtn.width = 500;
+        cancleBtn.y = 400;
+        cancleBtn.x = 350;
+
+        view.addChild(cancleBtn);
+
+        mask.addChild(view);
+
+        // const loading = Loading.getInstance()
+		// loading.show()
+
+        return {
+            view:mask,
+        }
+    }
+
     shakeView(view:egret.Sprite){
         egret.Tween.get(view)
-        .to({ x:-2 },50,egret.Ease.cubicInOut)
-        .to({ x:2 },50,egret.Ease.cubicInOut)
-        .to({ x:-2 },50,egret.Ease.cubicInOut)
+        .to({ x:-8 },50,egret.Ease.cubicInOut)
+        .to({ x:8 },50,egret.Ease.cubicInOut)
+        .to({ x:-8 },50,egret.Ease.cubicInOut)
         .to({ x:0 },50,egret.Ease.cubicInOut)
     }
 
@@ -310,11 +420,20 @@ class Game extends egret.Sprite implements GameInterface {
         text.strokeColor = strokeColor;
         text.stroke = 4;
         text.alpha = 0;
-        view.addChild(text);
+        text.zIndex = 99;
         
-        egret.Tween.get(text)
-        .to({ alpha:1,y:this.stageH * 0.25 },300)
-        .wait(200)
-        .to({ alpha:0,y:this.stageH * 0.23 },300)
+        const show = ()=>{
+            view.addChild(text);
+            egret.Tween.get(text)
+            .to({ alpha:1,y:this.stageH * 0.25 },300)
+            .wait(200)
+            .to({ alpha:0,y:this.stageH * 0.23 },300)
+            .call(()=>{
+                text.y = this.stageH * 0.28; 
+                view.removeChild(text);
+            });
+        }
+
+        return { show }
     }
 }

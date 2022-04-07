@@ -20,13 +20,13 @@ interface BeardInterface{
     faceX:number,
     faceY:number,
     beards:Array<BeardItem>,
-    touchBreadCb:()=>void
+    touchBreadCb:(breadNum:number)=>void
 }
 
 interface BreadParamsInterface<T>{
     faceX:T,
     faceY:T,
-    touchBreadCb?:()=>void
+    touchBreadCb?:(breadNum:number)=>void
 }
 
 class Beards extends egret.Sprite implements BeardInterface{
@@ -41,7 +41,7 @@ class Beards extends egret.Sprite implements BeardInterface{
     static touchPositionRecrod:{ x:number,y:number };
     
     word:p2.World;
-    touchBreadCb:()=>void = function(){};
+    touchBreadCb:(breadNum:number)=>void = function(){};
     
     constructor(beardParmas:BreadParamsInterface<number>){
         super();
@@ -160,34 +160,6 @@ class Beards extends egret.Sprite implements BeardInterface{
         return beard
     }
     private removeBeard = (beardItem:BeardItem):Promise<undefined> => {
-
-        // return new Promise(resolve=>{
-        //     let beardIndex = -1;    
-        //     this.beards.forEach((i,index)=>{ if(i.shape === beard) beardIndex = index });
-        //     this.beards[beardIndex].drop = true;
-        //     beard.$touchEnabled = false;
-        //     // 清除监听事件
-        //     beard.removeEventListener(egret.TouchEvent.TOUCH_TAP,this.touchBeard,beard);
-        //     beard.removeEventListener(egret.TouchEvent.TOUCH_MOVE,this.touchBeard,beard);
-        //     // 等待物理动画执行完毕
-        //     var timer = setTimeout(()=>{
-        //         this.beards.forEach((i,index)=>{ if(i.shape === beard) beardIndex = index });
-        //         const beardItem = this.beards[beardIndex]
-        //         // 清除动画
-        //         egret.Tween.removeTweens(beardItem.line);
-        //         // 从画布上消失
-        //         beard.parent.removeChild(beard);
-        //         // 删除刚体
-        //         this.word.removeBody(this.beards[beardIndex].body);
-        //         // 从数组中清除
-        //         this.beards.splice(beardIndex,1);
-        //         // 通知回收
-        //         beard = null;    
-        //         clearTimeout(timer);
-        //         resolve();
-        //     },600);
-        // })
-
         let beardIndex = -1;
         beardItem.drop = true;
         const beard = beardItem.shape
@@ -213,16 +185,35 @@ class Beards extends egret.Sprite implements BeardInterface{
         })
 
     }
+    private findNearBeard(x:number,y:number){
+        const nearBeards = this.beards.filter(beard=>{
+            if(beard.drop) return false;
+            const distance = Math.abs(Math.sqrt(Math.pow(x - beard.line.x,2) + Math.pow(y - beard.line.y,2)))
+            return distance <= 25
+        })
+        return nearBeards
+    }
     private touchBeard = async (beardItem:BeardItem,face:egret.Sprite,event:egret.TouchEvent)=> {
-        // console.log(this.beards.length , 'len' ,BREAS_NUM , this.beards.length <  BREAS_NUM)
+        
+        const nearBeards = this.findNearBeard(event.$stageX,event.$stageY);
 
         // 上下的位置 -1 为上 1 为下
         const verticalDirection = event.$stageY > Beards.touchPositionRecrod.y ? -1 : 1;
         // 左右的位置 -1 为左 1 为右
         const horizontalDirection = event.$stageX > Beards.touchPositionRecrod.x ? 1 : -1;
-
         Beards.touchPositionRecrod = { x:event.$stageX , y:event.$stageY }
-   
+        this.touchBreadCb(nearBeards.length);            
+
+        nearBeards.forEach(beard=>{
+            beard.body.applyForceLocal([0.1 * horizontalDirection,0.1 * verticalDirection],[beardItem.shape.x / factor,beardItem.shape.y / factor]);
+            // 清除胡子
+            this.removeBeard(beard)
+            .then(()=>{
+                // 再重新创建一条新胡子
+                this.createBear(face,true);
+            });
+        })
+       
         //  小于胡子的最小数量时及时补充
         if( this.beards.length <  (BREAS_NUM * 0.9) ){
             const timer = setTimeout(()=>{
@@ -232,15 +223,6 @@ class Beards extends egret.Sprite implements BeardInterface{
                 clearTimeout(timer);
             })
         }
-
-        this.touchBreadCb();            
-        beardItem.body.applyForceLocal([0.1 * horizontalDirection,0.1 * verticalDirection],[beardItem.shape.x / factor,beardItem.shape.y / factor]);
-        // 清除胡子
-        this.removeBeard(beardItem)
-        .then(()=>{
-            // 再重新创建一条新胡子
-            this.createBear(face,true);
-        });
     }
     // https://zhuanlan.zhihu.com/p/447898464 在圆中均匀分布随机点
     private randPoint(r:number,centerX:number,centerY:number,tryCount:number = 0):Array<number>{

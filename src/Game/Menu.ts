@@ -75,6 +75,30 @@ class Menu extends egret.Sprite implements MenuInter{
         aboutBtn.textAlign = egret.HorizontalAlign.CENTER;
         aboutBtn.verticalAlign = egret.VerticalAlign.MIDDLE;
 
+        // 音乐开关按钮
+        const musicBtn:egret.TextField = new egret.TextField();
+        musicBtn.textColor = 0x000000;
+        musicBtn.touchEnabled = true;
+        buttons.addChild(musicBtn);
+        musicBtn.size = 35;
+        musicBtn.width =  400;
+        musicBtn.text = '音乐：' + (SoundManager.musicIsPlay ? '开' : '关');
+        musicBtn.y = 180;
+        musicBtn.textAlign = egret.HorizontalAlign.CENTER;
+        musicBtn.verticalAlign = egret.VerticalAlign.MIDDLE;
+
+        // 排行榜
+        const rankBtn:egret.TextField = new egret.TextField();
+        rankBtn.textColor = 0x000000;
+        rankBtn.touchEnabled = true;
+        buttons.addChild(rankBtn);
+        musicBtn.size = 35;
+        rankBtn.width =  400;
+        rankBtn.text = '排行榜';
+        rankBtn.y = 260;
+        rankBtn.textAlign = egret.HorizontalAlign.CENTER;
+        rankBtn.verticalAlign = egret.VerticalAlign.MIDDLE;
+
         menu.addChild(buttons)
 
         // 作者
@@ -89,7 +113,6 @@ class Menu extends egret.Sprite implements MenuInter{
         author.width =  this.stageW;
         author.textAlign = egret.HorizontalAlign.CENTER;
         author.verticalAlign = egret.VerticalAlign.MIDDLE;
-
 
         // history
         const historyScore = egret.localStorage.getItem(GAME_STORAGE_NAME);
@@ -168,6 +191,17 @@ class Menu extends egret.Sprite implements MenuInter{
             SoundManager.getInstance().playButtonSound()
             menu.removeChild(aboutView);
         },aboutBtn)
+
+        musicBtn.addEventListener(egret.TouchEvent.TOUCH_TAP,()=>{
+            SoundManager.musicIsPlay = !SoundManager.musicIsPlay;
+            musicBtn.text = '音乐：' + (SoundManager.musicIsPlay ? '开' : '关');
+            SoundManager.getInstance().playButtonSound()
+        },musicBtn)
+
+        rankBtn.addEventListener(egret.TouchEvent.TOUCH_TAP,()=>{
+            SoundManager.getInstance().playButtonSound()
+            menu.addChild(new Rank(this.stageW , this.stageH));
+        },musicBtn)
 
         return menu;
     }

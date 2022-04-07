@@ -1,7 +1,6 @@
 class Main extends egret.DisplayObjectContainer {
     constructor(){
         super();
-
         this.addEventListener(egret.Event.ADDED_TO_STAGE,this.onAddToStage,this);
     }
 
@@ -23,10 +22,10 @@ class Main extends egret.DisplayObjectContainer {
         const changeHistoryEvent = new egret.Event('changeHistory')
 
         const stage = this;
-        // stage.addChild(menuView);
-        stage.addChild(gameView);
-        
-        menuView.addEventListener('startGame',async function(){
+        stage.addChild(menuView);
+        // stage.addChild(gameView);
+
+        const onStartGame = async ()=>{
             stage.removeChild(menuView);
             stage.addChild(startView);
             await start.showText();
@@ -35,20 +34,13 @@ class Main extends egret.DisplayObjectContainer {
             gameView.dispatchEvent(startGameEvent);
             stage.addChild(gameView);
             SoundManager.getInstance().playBgSound()
-        },menuView);
-
-        gameView.addEventListener('restart',async function(){
-            stage.removeChild(gameView);
-            stage.addChild(startView);
-            await start.showText();
-            SoundManager.getInstance().playStartSound()
-            stage.removeChild(startView);
-            gameView.dispatchEvent(startGameEvent);
-            stage.addChild(gameView);
-        },menuView);
+        }
+        
+        menuView.addEventListener('startGame',onStartGame,menuView);
+        
+        gameView.addEventListener('restart',onStartGame,menuView);
 
         gameView.addEventListener('gameOver',function(){
-            console.log('game Over Event')
             // 修改游戏历史
             menuView.dispatchEvent(changeHistoryEvent);
             // SoundManager.getInstance().stopBgSound();

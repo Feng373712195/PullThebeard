@@ -35,9 +35,11 @@ class Face extends egret.Sprite implements FaceInterface{
         this.openMouth = this.drawOpenMouth();
         this.shynessFace =  this.drawShyness(); 
 
-        const touchBreadEvent = new egret.Event('touchBread');
-   
-        const bread = new Beards({ faceX:this.faceX,faceY:this.faceY,touchBreadCb:()=> this.face.dispatchEvent(touchBreadEvent) });
+        const bread = new Beards({ 
+            faceX:this.faceX,
+            faceY:this.faceY,
+            touchBreadCb:(breadNum:number)=> this.face.dispatchEvent(new egret.Event('touchBread',false,false,breadNum)) 
+        });
 
         this.drawBeardSkin(this.face);
         this.drawFaceLine(this.face);

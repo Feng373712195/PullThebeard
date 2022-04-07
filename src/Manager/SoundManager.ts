@@ -1,4 +1,11 @@
-let musicIsPlay = false;
+// 游戏音乐默认开启
+let musicIsPlay = true;
+
+if( localStorage.getItem('musicPlay') ){
+    musicIsPlay = localStorage.getItem('musicPlay') === '1' ? true : false;
+}else{
+    localStorage.setItem('musicPlay','1');
+}
 
 interface SoundItem {
     sound:egret.Sound , 
@@ -26,11 +33,7 @@ class SoundManager {
 	}
 
     public constructor(){
-        if( localStorage.getItem('musicPlay') ){
-            musicIsPlay = localStorage.getItem('musicPlay') === '1' ? true : false;
-         }else{
-            localStorage.setItem('musicPlay','1');
-         }
+
     }
     public static get musicIsPlay() {
         return musicIsPlay;
@@ -53,8 +56,6 @@ class SoundManager {
 
     async playSound(soundKey:string,loops:number,resourceSrc:string,start:number = 0):Promise<SoundItem>{
         
-        if( !SoundManager.musicIsPlay ) return
-
         let sound:egret.Sound = null;
         let soundChannel:egret.SoundChannel = null;
 
@@ -87,24 +88,30 @@ class SoundManager {
 
     }
     public async playButtonSound(){
+        if( !SoundManager.musicIsPlay ) return 
         const { soundChannel } = await this.playSound('button',1,'resource/sounds/button.wav')
         soundChannel.volume = 0.3
     }
     public async playStartSound(){
+        if( !SoundManager.musicIsPlay ) return 
         const { soundChannel } = await this.playSound('start',1,'resource/sounds/start.wav',0.2)
         soundChannel.volume = 0.3
     }
     public async playShoutSound(){
+        if( !SoundManager.musicIsPlay ) return 
         // 防止频繁播放
         if(this.soundMap['shout'] && this.soundMap['shout'].playing) return;
         const { soundChannel } = await this.playSound('shout',1,'resource/sounds/shout.wav')
         soundChannel.volume = 0.1
     }
     public async playLongShoutSound(){
+        if( !SoundManager.musicIsPlay ) return 
         const { soundChannel } = await this.playSound('longShout',1,'resource/sounds/longShout.wav')
         soundChannel.volume = 0.1
     }
     public async palyPullShoutSound(){
+        if( !SoundManager.musicIsPlay ) return 
+
         if(this.soundMap['pullShount'] && this.soundMap['pullShount'].playing) return;
         const { soundChannel } = await this.playSound('pullShount',0,'resource/sounds/pullShout.wav')
         /* 
@@ -119,16 +126,22 @@ class SoundManager {
         this.soundMap['pullShount'].playing = true
     }
     public stopPullShoutSound(){
+        if( !SoundManager.musicIsPlay ) return 
+
         if(this.soundMap['pullShount'].soundChannel) this.soundMap['pullShount'].soundChannel.stop();
         this.soundMap['pullShount'].play = false
         this.soundMap['pullShount'].playing = false
     }
     public async playBgSound(){
+        if( !SoundManager.musicIsPlay ) return 
+        if(this.soundMap['bg'] && this.soundMap['bg'].playing) return;
         const { soundChannel } = await this.playSound('bg',0,'resource/sounds/bg.mp3')
         soundChannel.volume = 0.3
     }
     public stopBgSound(){
+        if( !SoundManager.musicIsPlay ) return 
+
         this.soundMap['bg'].soundChannel.stop();
-        this.soundMap['pullShount'].playing = false
+        this.soundMap['bg'].playing = false
     }
 }
