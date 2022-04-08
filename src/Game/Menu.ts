@@ -14,7 +14,7 @@ class Menu extends egret.Sprite implements MenuInter{
         this.stageH = stageH;
     }
 
-     draw(){
+    draw(){
         const menu:egret.Sprite = new egret.Sprite();
         menu.graphics.drawRect(0,0,this.stageW,this.stageH);
         menu.graphics.endFill();
@@ -129,11 +129,62 @@ class Menu extends egret.Sprite implements MenuInter{
             menu.addChild(history);
         }
 
+        let touchEnabled = true;
+
         menu.addEventListener('changeHistory',()=>{
             const historyScore = egret.localStorage.getItem(GAME_STORAGE_NAME);
             history.text = '最高纪录：' + historyScore;
             menu.addChild(history);
         },menu);
+
+        const aboutView = this.drawAboutView(this.stageW,this.stageH);
+
+        aboutBtn.addEventListener(egret.TouchEvent.TOUCH_TAP,()=>{
+            touchEnabled = false
+            SoundManager.getInstance().playButtonSound()
+            menu.addChild(aboutView);
+        },aboutBtn)
+
+        aboutView.addEventListener('close',()=>{
+            touchEnabled = true
+            SoundManager.getInstance().playButtonSound()
+            menu.removeChild(aboutView);
+        },aboutView)
+
+        musicBtn.addEventListener(egret.TouchEvent.TOUCH_TAP,()=>{
+            SoundManager.musicIsPlay = !SoundManager.musicIsPlay;
+            musicBtn.text = '音乐：' + (SoundManager.musicIsPlay ? '开' : '关');
+            SoundManager.getInstance().playButtonSound()
+        },musicBtn)
+
+
+        let rankView = new Rank(this.stageW , this.stageH);
+        rankView.addEventListener('close',()=>{
+            menu.removeChild(rankView);
+        },null);
+
+        rankBtn.addEventListener(egret.TouchEvent.TOUCH_TAP,()=>{
+            if(!touchEnabled) return
+            SoundManager.getInstance().playButtonSound()
+            menu.addChild(rankView);
+            rankView.load();
+        },musicBtn)
+
+        return menu;
+    }
+
+    private gameNameAnim(tw:egret.Tween):void{
+        tw.to({ rotation:10 },999,egret.Ease.backInOut)
+        tw.to({ rotation:-10 },999,egret.Ease.backInOut)
+        .call( this.gameNameAnim.bind(this,tw) )
+    }
+
+    private drawAboutView(stageW:number,stageH:number){
+        const mask:egret.Sprite = new egret.Sprite();
+        mask.zIndex = 999;
+        mask.graphics.beginFill(0x000000,0.4);
+        mask.graphics.drawRect(0,0,stageW,stageH);
+        mask.graphics.endFill();
 
         // 绘制关于视图
         const aboutView:egret.Sprite = new egret.Sprite(); 
@@ -157,7 +208,7 @@ class Menu extends egret.Sprite implements MenuInter{
         closeBtn.size = 40;
         closeBtn.text='x';
         closeAbout.addChild(closeBtn);
-        closeBtn.y = -25;
+        closeBtn.y = -20;
         closeBtn.x = -10;
 
         const aboutTitle:egret.TextField = new egret.TextField();
@@ -179,37 +230,15 @@ class Menu extends egret.Sprite implements MenuInter{
         aboutText.x = 30;
         aboutText.width = 450;
 
-        
         aboutView.addChild(closeAbout);
-        
-        aboutBtn.addEventListener(egret.TouchEvent.TOUCH_TAP,()=>{
-            SoundManager.getInstance().playButtonSound()
-            menu.addChild(aboutView);
-        },aboutBtn)
 
         closeAbout.addEventListener(egret.TouchEvent.TOUCH_TAP,()=>{
-            SoundManager.getInstance().playButtonSound()
-            menu.removeChild(aboutView);
-        },aboutBtn)
+            mask.dispatchEvent(new egret.Event('close'))
+        },closeAbout);
 
-        musicBtn.addEventListener(egret.TouchEvent.TOUCH_TAP,()=>{
-            SoundManager.musicIsPlay = !SoundManager.musicIsPlay;
-            musicBtn.text = '音乐：' + (SoundManager.musicIsPlay ? '开' : '关');
-            SoundManager.getInstance().playButtonSound()
-        },musicBtn)
+        mask.addChild(aboutView);
 
-        rankBtn.addEventListener(egret.TouchEvent.TOUCH_TAP,()=>{
-            SoundManager.getInstance().playButtonSound()
-            menu.addChild(new Rank(this.stageW , this.stageH));
-        },musicBtn)
-
-        return menu;
-    }
-
-    private gameNameAnim(tw:egret.Tween):void{
-        tw.to({ rotation:10 },999,egret.Ease.backInOut)
-        tw.to({ rotation:-10 },999,egret.Ease.backInOut)
-        .call( this.gameNameAnim.bind(this,tw) )
+        return mask
     }
 
 }

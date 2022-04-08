@@ -1,7 +1,7 @@
 {
 	"groups": [
 		{
-			"keys": "checkbox_select_disabled_png,checkbox_select_down_png,checkbox_select_up_png,checkbox_unselect_png,selected_png,border_png,header_png,radiobutton_select_disabled_png,radiobutton_select_down_png,radiobutton_select_up_png,radiobutton_unselect_png,roundthumb_png,thumb_png,track_png,tracklight_png,handle_png,off_png,on_png,button_down_png,button_up_png,thumb_pb_png,track_pb_png,track_sb_png,bg_jpg,egret_icon_png,description_json",
+			"keys": "checkbox_select_disabled_png,checkbox_select_down_png,checkbox_select_up_png,checkbox_unselect_png,selected_png,border_png,header_png,radiobutton_select_disabled_png,radiobutton_select_down_png,radiobutton_select_up_png,radiobutton_unselect_png,roundthumb_png,thumb_png,track_png,tracklight_png,handle_png,off_png,on_png,button_down_png,button_up_png,thumb_pb_png,track_pb_png,track_sb_png,bg_jpg,egret_icon_png,description_json,bg_mp3,pullShout_wav,shout_wav,longShout_wav,start_wav,button_wav,cd_png,nice_wav,wow_wav",
 			"name": "preload"
 		}
 	],
@@ -135,6 +135,51 @@
 			"name": "description_json",
 			"type": "json",
 			"url": "config/description.json"
+		},
+		{
+			"name": "bg_mp3",
+			"type": "sound",
+			"url": "sounds/bg.mp3"
+		},
+		{
+			"name": "pullShout_wav",
+			"type": "sound",
+			"url": "sounds/pullShout.wav"
+		},
+		{
+			"name": "shout_wav",
+			"type": "sound",
+			"url": "sounds/shout.wav"
+		},
+		{
+			"name": "longShout_wav",
+			"type": "sound",
+			"url": "sounds/longShout.wav"
+		},
+		{
+			"name": "start_wav",
+			"type": "sound",
+			"url": "sounds/start.wav"
+		},
+		{
+			"name": "button_wav",
+			"type": "sound",
+			"url": "sounds/button.wav"
+		},
+		{
+			"name": "cd_png",
+			"type": "image",
+			"url": "assets/cd.png"
+		},
+		{
+			"name": "nice_wav",
+			"type": "sound",
+			"url": "sounds/nice.wav"
+		},
+		{
+			"name": "wow_wav",
+			"type": "sound",
+			"url": "sounds/wow.wav"
 		}
 	]
 }

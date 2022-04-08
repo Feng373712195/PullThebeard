@@ -97,6 +97,16 @@ class SoundManager {
         const { soundChannel } = await this.playSound('start',1,'resource/sounds/start.wav',0.2)
         soundChannel.volume = 0.3
     }
+    public async playWoWSound(){
+        if( !SoundManager.musicIsPlay ) return 
+        const { soundChannel } = await this.playSound('wowShout',1,'resource/sounds/wow.wav')
+        soundChannel.volume = 0.1
+    }
+    public async playNiceSound(){
+        if( !SoundManager.musicIsPlay ) return 
+        const { soundChannel } = await this.playSound('niceShout',1,'resource/sounds/nice.wav')
+        soundChannel.volume = 0.1
+    }
     public async playShoutSound(){
         if( !SoundManager.musicIsPlay ) return 
         // 防止频繁播放
@@ -127,7 +137,7 @@ class SoundManager {
     }
     public stopPullShoutSound(){
         if( !SoundManager.musicIsPlay ) return 
-
+        if(!this.soundMap['pullShount']) return
         if(this.soundMap['pullShount'].soundChannel) this.soundMap['pullShount'].soundChannel.stop();
         this.soundMap['pullShount'].play = false
         this.soundMap['pullShount'].playing = false

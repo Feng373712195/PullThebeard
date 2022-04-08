@@ -19,15 +19,8 @@
       "name": "tween"
     },
     {
-      "name": "promise"
-    },
-    {
-      "name": "WXCloudApi",
-      "path": "./libs/WXCloudApi"
-    },
-    {
-      "name": "egretmgobe",
-      "path": "./libs/egretmgobe"
+      "name": "physics",
+      "path": "./libs/physics"
     }
   ]
 }

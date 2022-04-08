@@ -1,5 +1,6 @@
 const GAME_TIME_SECOUND = 15;
 const GAME_STORAGE_NAME = 'gameScoreRecode'
+const PLAYNAME_STORAGE_NAME = 'playerName'
 
 interface GameInterface {
     stageW:number,
@@ -40,7 +41,7 @@ class Game extends egret.Sprite implements GameInterface {
     draw(){
         
         // 游戏是否在进行中
-        this.playing = true;
+        this.playing = false;
         const backMenuEvent = new egret.Event('backMenu');
         const restartEvent = new egret.Event('restart');
         const gameOverEvent = new egret.Event('gameOver');
@@ -49,6 +50,8 @@ class Game extends egret.Sprite implements GameInterface {
             backMenuCb:()=> gameView.dispatchEvent(backMenuEvent),
             restartCb:()=> gameView.dispatchEvent(restartEvent),
         })
+
+        const intoRankView = this.drawIntoRankView();
 
         const gameView:egret.Sprite = new egret.Sprite();
         gameView.graphics.drawRect(0,0,this.stageW,this.stageH);
@@ -70,6 +73,8 @@ class Game extends egret.Sprite implements GameInterface {
 
         backBtn.addEventListener(egret.TouchEvent.TOUCH_TAP,()=>{
             SoundManager.getInstance().playButtonSound()
+            clearTimeout(this.timer);
+            this.playing = false;
             gameView.dispatchEvent(backMenuEvent);
         },backBtn)
 
@@ -142,37 +147,41 @@ class Game extends egret.Sprite implements GameInterface {
             let needClearExpressionScore = false
             this.expressionScore += event.data;
             if(this.useTime === 1){
-                if(this.expressionScore >= 90){
+                if(this.expressionScore >= 50){
                     reward = 20
-                    needClearExpressionScore = true
                     SoundManager.getInstance().playLongShoutSound();
                     face.shyness();
                     face.openMouthAction();
                     this.shakeView(gameView)
                     perfectText.show()
                 }
-                else if(this.expressionScore >= 80){
+                else if(this.expressionScore >= 40){
                     reward = 15
-                    needClearExpressionScore = true
                     SoundManager.getInstance().playShoutSound();
                     face.openMouthAction();
                     this.shakeView(gameView)
                     goodText.show()
                 }
-                else if(this.expressionScore >= 70){
+                else if(this.expressionScore >= 30){
                     reward = 10
-                    needClearExpressionScore = true
-                    SoundManager.getInstance().playShoutSound();
+                    SoundManager.getInstance().playNiceSound();
                     face.openMouthAction();
                     niceText.show();
                 }
-                console.log(this.expressionScore)
-                if(needClearExpressionScore) this.expressionScore = 0
+                console.log(this.expressionScore);
+                this.expressionScore = 0
                 this.useTime = 0
-            }   
+            } 
             score += event.data
             scoreText.text = '得分：' + (score + reward)
         }
+
+        intoRankView.view.addEventListener('finish',(event)=>{
+            console.log('intoRankView finish',event)
+            gameView.removeChild(intoRankView.view);
+            resultView.changeScore(event.data);
+            gameView.addChild(resultView.view);
+        },intoRankView);
 
         gameView.addEventListener('startGame',reset,gameView);
 
@@ -180,15 +189,30 @@ class Game extends egret.Sprite implements GameInterface {
 
         faceView.addEventListener('touchBread',touchBread,faceView);
 
-        gameView.addEventListener('gameOver',()=>{
+        gameView.addEventListener('gameOver',async ()=>{
             this.expressionScore = 0
             this.useTime = 0
             faceView.touchChildren = false;
             faceView.touchEnabled = false;
             backBtn.touchEnabled = false;
 
-            resultView.changeScore(score);
-            gameView.addChild(resultView.view);
+            let rank = -1;
+
+            if(score !== 0){
+                Loading.getInstance().show();
+                rank = await this.checkScoreIntoRank(score)
+                Loading.getInstance().hide();
+            }
+
+            if(rank !== -1){
+                SoundManager.getInstance().playWoWSound();
+                intoRankView.changeScore(score);
+                intoRankView.changeRank(rank);
+                gameView.addChild(intoRankView.view);
+            }else{
+                resultView.changeScore(score);
+                gameView.addChild(resultView.view);
+            }
 
             // 记录数据
             const historyScore = egret.localStorage.getItem(GAME_STORAGE_NAME);
@@ -205,8 +229,6 @@ class Game extends egret.Sprite implements GameInterface {
 
         gameView.addChild(faceView);
 
-        // const intoRankView = this.drawIntoRankView();
-        // gameView.addChild(intoRankView.view);
 
         return gameView;
     }
@@ -292,6 +314,7 @@ class Game extends egret.Sprite implements GameInterface {
 
     drawIntoRankView(){
 
+        let _score = 0;
         // 最终得分
         const mask:egret.Sprite = new egret.Sprite();
         mask.zIndex = 999;
@@ -318,7 +341,7 @@ class Game extends egret.Sprite implements GameInterface {
         const title:egret.TextField = new egret.TextField();
         title.textColor = 0x000000
         title.size = 35;
-        title.text = '进入排行榜啦～'
+        title.text = '你的成绩进入排行榜啦～'
         title.width = 500;
         title.y = 40;
         title.textAlign = egret.HorizontalAlign.CENTER;
@@ -326,7 +349,6 @@ class Game extends egret.Sprite implements GameInterface {
 
         const tips:egret.TextField = new egret.TextField();
         tips.textColor = 0x000000
-        tips.text = '恭喜你进入排行榜第1名，留下你的名字让更多人来挑战你吧';
         tips.size = 24;
         tips.width = 400;
         tips.y = 120;
@@ -346,52 +368,99 @@ class Game extends egret.Sprite implements GameInterface {
         view.addChild(inputTips);
 
         const input = new eui.TextInput();
-        input.skinName = "resource/eui_skins/TextInputSkin.exml";
+        var exml = `<e:Skin class="skins.TextInputSkin" minHeight="40" minWidth="300" states="normal,disabled,normalWithPrompt,disabledWithPrompt" xmlns:e="http://ns.egret.com/eui">
+            <e:Rect height="100%" width="100%" strokeColor="0x000000" strokeWeight="2" fillColor="0xffffff"/>
+            <e:EditableText id="textDisplay" verticalCenter="0" left="10" right="10" textColor="0x000000" textColor.disabled="0xff0000" width="100%" height="24" size="20" />
+            <e:Label id="promptDisplay" verticalCenter="0" left="10" right="10" textColor="0xa9a9a9" width="100%" height="24" size="20" touchEnabled="false" includeIn="normalWithPrompt,disabledWithPrompt"/>
+        </e:Skin>`;
+        input.skinName = exml;
         input.prompt = "请输入昵称";
         input.y = 260;
         input.x = 50;
         input.width = 400;
         input.height = 50;
+
         view.addChild(input)
 
         const validateTips:egret.TextField = new egret.TextField();
         validateTips.textColor = 0xFF0000
-        validateTips.text = '请在下面输入框输入你的名称';
+        validateTips.text = '请在上面输入框输入你的名称';
         validateTips.size = 18;
         validateTips.width = 300;
         validateTips.y = 320;
         validateTips.x = 100;
         validateTips.textAlign = egret.HorizontalAlign.CENTER;
+        validateTips.alpha = 0;
         view.addChild(validateTips);
 
         const sureBtn:egret.TextField = new egret.TextField();
         sureBtn.text = '确定'
         sureBtn.size = 24;
+        sureBtn.touchEnabled = true;
         sureBtn.textColor = 0x000000
         sureBtn.width = 100;
         sureBtn.y = 400;
         sureBtn.x = 100;
+
+        sureBtn.addEventListener(egret.TouchEvent.TOUCH_TAP,async ()=>{
+            if(!input.text) {
+                validateTips.alpha = 1;
+                return
+            }else{
+                validateTips.alpha = 0;
+            };
+            
+            try{
+                Loading.getInstance().show();
+                console.log(_score)
+                const res = await Http.PostRequest('/api/rank',{ playerName:input.text,score:_score });
+                localStorage.setItem(PLAYNAME_STORAGE_NAME,input.text)
+                Loading.getInstance().hide();
+            }finally{
+                SoundManager.getInstance().playButtonSound()
+                mask.dispatchEvent(new egret.Event('finish',false,false,_score));
+            }
+        },sureBtn)
 
         view.addChild(sureBtn);
 
         const cancleBtn:egret.TextField = new egret.TextField();
         cancleBtn.text = '取消'
         cancleBtn.size = 24;
+        cancleBtn.touchEnabled = true;
         cancleBtn.textColor = 0x000000
-        sureBtn.width = 100;
-        cancleBtn.width = 500;
+        cancleBtn.width = 100;
         cancleBtn.y = 400;
         cancleBtn.x = 350;
+
+        cancleBtn.addEventListener(egret.TouchEvent.TOUCH_TAP,()=>{
+            SoundManager.getInstance().playButtonSound()
+            mask.dispatchEvent(new egret.Event('finish',false,false,_score));
+        },cancleBtn)
 
         view.addChild(cancleBtn);
 
         mask.addChild(view);
 
-        // const loading = Loading.getInstance()
-		// loading.show()
-
         return {
             view:mask,
+            changeRank:(rank:number)=>{
+                validateTips.alpha = 0;
+                if(localStorage.getItem(PLAYNAME_STORAGE_NAME)){
+                    input.text = localStorage.getItem(PLAYNAME_STORAGE_NAME)
+                };
+
+                tips.textFlow = [
+                    { text: "恭喜你进入排行榜第", style: { "textColor": 0x000000, "size": 24 } },
+                    { text: ` ${rank} `, style: { "textColor": 0xFF4d4F, "size": 30 , bold:true } },
+                    { text: "名，留下你的", style: { "textColor": 0x000000, "size": 24 } }, 
+                    { text: "「掘金昵称」", style: { "textColor": 0x007fff, "size": 24 , bold:true } },
+                    { text: "让更多人来挑战你吧", style: { "textColor": 0x000000, "size": 24 } },
+                ];
+            },
+            changeScore:(score)=>{
+                _score = score
+            }
         }
     }
 
@@ -435,5 +504,18 @@ class Game extends egret.Sprite implements GameInterface {
         }
 
         return { show }
+    }
+
+    async checkScoreIntoRank(score){
+        const res = await Http.PostRequest<{
+            code:number,
+            data:{ rank:number},
+            success:boolean
+        }>('/api/check-score',{ score });
+
+        if(res.success){
+            return res.data.rank
+        }
+        return -1
     }
 }

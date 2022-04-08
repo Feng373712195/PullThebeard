@@ -26,7 +26,8 @@ class Main extends egret.DisplayObjectContainer {
         // stage.addChild(gameView);
 
         const onStartGame = async ()=>{
-            stage.removeChild(menuView);
+            if(menuView.parent) stage.removeChild(menuView);
+            if(gameView.parent) stage.removeChild(gameView);
             stage.addChild(startView);
             await start.showText();
             SoundManager.getInstance().playStartSound()
