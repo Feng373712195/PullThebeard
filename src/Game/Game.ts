@@ -168,7 +168,7 @@ class Game extends egret.Sprite implements GameInterface {
                     face.openMouthAction();
                     niceText.show();
                 }
-                console.log(this.expressionScore);
+                // console.log(this.expressionScore);
                 this.expressionScore = 0
                 this.useTime = 0
             } 
