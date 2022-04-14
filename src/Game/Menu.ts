@@ -27,7 +27,7 @@ class Menu extends egret.Sprite implements MenuInter{
 
         gameName.width =  this.stageW,
         gameName.height = this.stageH
-        gameName.text = "剃胡子"; 
+        gameName.text = "刮胡子"; 
         gameName.textAlign = egret.HorizontalAlign.CENTER;
         
         gameName.anchorOffsetX = this.stageW/2;
@@ -223,7 +223,7 @@ class Menu extends egret.Sprite implements MenuInter{
         const aboutText:egret.TextField = new egret.TextField();
         aboutText.textColor = 0x000000;
         aboutText.size = 32;
-        aboutText.text='瞧呐！！！快看看这个家伙，胡子长个不停。大家赶快来帮帮它。用手指划动或者点击脸部下巴的胡子，即可帮它拔掉，看看你们在规定的秒数内可以剃掉多少胡子。';
+        aboutText.text='瞧呐！！！快看看这个家伙，胡子长个不停。大家赶快来帮帮它。用手指划动或者点击脸部下巴的胡子，即可帮它拔掉，看看你们在规定的秒数内可以刮掉多少胡子。';
         aboutView.addChild(aboutText);
         aboutText.lineSpacing = 15;
         aboutText.y = 120;

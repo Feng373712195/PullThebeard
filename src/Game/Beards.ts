@@ -185,7 +185,7 @@ class Beards extends egret.Sprite implements BeardInterface{
         })
 
     }
-    private findNearBeard(x:number,y:number){
+    private findClosestBeards(x:number,y:number){
         const nearBeards = this.beards.filter(beard=>{
             if(beard.drop) return false;
             const distance = Math.abs(Math.sqrt(Math.pow(x - beard.line.x,2) + Math.pow(y - beard.line.y,2)))
@@ -195,7 +195,7 @@ class Beards extends egret.Sprite implements BeardInterface{
     }
     private touchBeard = async (beardItem:BeardItem,face:egret.Sprite,event:egret.TouchEvent)=> {
         
-        const nearBeards = this.findNearBeard(event.$stageX,event.$stageY);
+        const nearBeards = this.findClosestBeards(event.$stageX,event.$stageY);
 
         // 上下的位置 -1 为上 1 为下
         const verticalDirection = event.$stageY > Beards.touchPositionRecrod.y ? -1 : 1;
@@ -225,19 +225,19 @@ class Beards extends egret.Sprite implements BeardInterface{
         }
     }
     // https://zhuanlan.zhihu.com/p/447898464 在圆中均匀分布随机点
-    private randPoint(r:number,centerX:number,centerY:number,tryCount:number = 0):Array<number>{
+    private randomPoint(r:number,centerX:number,centerY:number,tryCount:number = 0):Array<number>{
            let theta = 2 * Math.PI * Math.random();
            let len = Math.sqrt(Math.random()) * r;
            let x = centerX + len * Math.cos(theta); 
            let y = centerY + len * Math.sin(theta);
            // y值太大 重新绘制 重新绘制次数为3次 都为失败则不绘制
            if( y < this.faceY - BREAS_Y && tryCount != 3 ){
-               return this.randPoint(r,centerX,centerY,++tryCount)
+               return this.randomPoint(r,centerX,centerY,++tryCount)
            }
            return [x,y];
     }
     private createBear(face:egret.Sprite,usePool:boolean = false){
-        const [x,y] = this.randPoint(250,this.faceX,this.faceY);
+        const [x,y] = this.randomPoint(250,this.faceX,this.faceY);
         
         if( y > this.faceY - BREAS_Y ){
             const beard = usePool ? this.reDrawBear(x,y,face) : this.drawBeard(x,y,face);

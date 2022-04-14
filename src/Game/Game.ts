@@ -177,7 +177,6 @@ class Game extends egret.Sprite implements GameInterface {
         }
 
         intoRankView.view.addEventListener('finish',(event)=>{
-            console.log('intoRankView finish',event)
             gameView.removeChild(intoRankView.view);
             resultView.changeScore(event.data);
             gameView.addChild(resultView.view);
@@ -197,8 +196,8 @@ class Game extends egret.Sprite implements GameInterface {
             backBtn.touchEnabled = false;
 
             let rank = -1;
-
-            if(score !== 0){
+            
+            if(score !== 0 && !IS_LOCAL){
                 Loading.getInstance().show();
                 rank = await this.checkScoreIntoRank(score)
                 Loading.getInstance().hide();
@@ -412,7 +411,6 @@ class Game extends egret.Sprite implements GameInterface {
             
             try{
                 Loading.getInstance().show();
-                console.log(_score)
                 const res = await Http.PostRequest('/api/rank',{ playerName:input.text,score:_score });
                 localStorage.setItem(PLAYNAME_STORAGE_NAME,input.text)
                 Loading.getInstance().hide();

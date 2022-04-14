@@ -1,4 +1,7 @@
-const BASE_URL = '//119.91.199.212'
+const BASE_URL = 'http://localhost:3000'
+
+// 本地环境 无服务器环境
+const IS_LOCAL = true;
 
 module Http {
     // 数据处理

@@ -27,7 +27,7 @@ var Menu = (function (_super) {
         menu.addChild(gameName);
         gameName.width = this.stageW,
             gameName.height = this.stageH;
-        gameName.text = "剃胡子";
+        gameName.text = "刮胡子";
         gameName.textAlign = egret.HorizontalAlign.CENTER;
         gameName.anchorOffsetX = this.stageW / 2;
         gameName.x = this.stageW / 2;
@@ -53,6 +53,7 @@ var Menu = (function (_super) {
         startBtn.verticalAlign = egret.VerticalAlign.MIDDLE;
         var startGammEvent = new egret.Event('startGame');
         startBtn.addEventListener(egret.TouchEvent.TOUCH_TAP, function () {
+            SoundManager.getInstance().playButtonSound();
             menu.dispatchEvent(startGammEvent);
         }, startBtn);
         // 关于游戏按钮
@@ -67,6 +68,28 @@ var Menu = (function (_super) {
         aboutBtn.y = 100;
         aboutBtn.textAlign = egret.HorizontalAlign.CENTER;
         aboutBtn.verticalAlign = egret.VerticalAlign.MIDDLE;
+        // 音乐开关按钮
+        var musicBtn = new egret.TextField();
+        musicBtn.textColor = 0x000000;
+        musicBtn.touchEnabled = true;
+        buttons.addChild(musicBtn);
+        musicBtn.size = 35;
+        musicBtn.width = 400;
+        musicBtn.text = '音乐：' + (SoundManager.musicIsPlay ? '开' : '关');
+        musicBtn.y = 180;
+        musicBtn.textAlign = egret.HorizontalAlign.CENTER;
+        musicBtn.verticalAlign = egret.VerticalAlign.MIDDLE;
+        // 排行榜
+        var rankBtn = new egret.TextField();
+        rankBtn.textColor = 0x000000;
+        rankBtn.touchEnabled = true;
+        buttons.addChild(rankBtn);
+        musicBtn.size = 35;
+        rankBtn.width = 400;
+        rankBtn.text = '排行榜';
+        rankBtn.y = 260;
+        rankBtn.textAlign = egret.HorizontalAlign.CENTER;
+        rankBtn.verticalAlign = egret.VerticalAlign.MIDDLE;
         menu.addChild(buttons);
         // 作者
         var author = new egret.TextField();
@@ -91,11 +114,52 @@ var Menu = (function (_super) {
             history.text = '最高纪录：' + historyScore;
             menu.addChild(history);
         }
+        var touchEnabled = true;
         menu.addEventListener('changeHistory', function () {
             var historyScore = egret.localStorage.getItem(GAME_STORAGE_NAME);
             history.text = '最高纪录：' + historyScore;
             menu.addChild(history);
         }, menu);
+        var aboutView = this.drawAboutView(this.stageW, this.stageH);
+        aboutBtn.addEventListener(egret.TouchEvent.TOUCH_TAP, function () {
+            touchEnabled = false;
+            SoundManager.getInstance().playButtonSound();
+            menu.addChild(aboutView);
+        }, aboutBtn);
+        aboutView.addEventListener('close', function () {
+            touchEnabled = true;
+            SoundManager.getInstance().playButtonSound();
+            menu.removeChild(aboutView);
+        }, aboutView);
+        musicBtn.addEventListener(egret.TouchEvent.TOUCH_TAP, function () {
+            SoundManager.musicIsPlay = !SoundManager.musicIsPlay;
+            musicBtn.text = '音乐：' + (SoundManager.musicIsPlay ? '开' : '关');
+            SoundManager.getInstance().playButtonSound();
+        }, musicBtn);
+        var rankView = new Rank(this.stageW, this.stageH);
+        rankView.addEventListener('close', function () {
+            menu.removeChild(rankView);
+        }, null);
+        rankBtn.addEventListener(egret.TouchEvent.TOUCH_TAP, function () {
+            if (!touchEnabled)
+                return;
+            SoundManager.getInstance().playButtonSound();
+            menu.addChild(rankView);
+            rankView.load();
+        }, musicBtn);
+        return menu;
+    };
+    Menu.prototype.gameNameAnim = function (tw) {
+        tw.to({ rotation: 10 }, 999, egret.Ease.backInOut);
+        tw.to({ rotation: -10 }, 999, egret.Ease.backInOut)
+            .call(this.gameNameAnim.bind(this, tw));
+    };
+    Menu.prototype.drawAboutView = function (stageW, stageH) {
+        var mask = new egret.Sprite();
+        mask.zIndex = 999;
+        mask.graphics.beginFill(0x000000, 0.4);
+        mask.graphics.drawRect(0, 0, stageW, stageH);
+        mask.graphics.endFill();
         // 绘制关于视图
         var aboutView = new egret.Sprite();
         aboutView.graphics.lineStyle(5, 0x000000);
@@ -116,7 +180,7 @@ var Menu = (function (_super) {
         closeBtn.size = 40;
         closeBtn.text = 'x';
         closeAbout.addChild(closeBtn);
-        closeBtn.y = -25;
+        closeBtn.y = -20;
         closeBtn.x = -10;
         var aboutTitle = new egret.TextField();
         aboutTitle.textColor = 0x000000;
@@ -129,27 +193,19 @@ var Menu = (function (_super) {
         var aboutText = new egret.TextField();
         aboutText.textColor = 0x000000;
         aboutText.size = 32;
-        aboutText.text = '瞧呐！！！快看看这个家伙，胡子长个不停。大家赶快来帮帮它。用手指划动或者点击脸部下巴的胡子，即可帮它拔掉，看看你们在规定的秒数内可以剃掉多少胡子。';
+        aboutText.text = '瞧呐！！！快看看这个家伙，胡子长个不停。大家赶快来帮帮它。用手指划动或者点击脸部下巴的胡子，即可帮它拔掉，看看你们在规定的秒数内可以刮掉多少胡子。';
         aboutView.addChild(aboutText);
         aboutText.lineSpacing = 15;
         aboutText.y = 120;
         aboutText.x = 30;
         aboutText.width = 450;
         aboutView.addChild(closeAbout);
-        aboutBtn.addEventListener(egret.TouchEvent.TOUCH_TAP, function () {
-            menu.addChild(aboutView);
-        }, aboutBtn);
         closeAbout.addEventListener(egret.TouchEvent.TOUCH_TAP, function () {
-            menu.removeChild(aboutView);
-        }, aboutBtn);
-        return menu;
-    };
-    Menu.prototype.gameNameAnim = function (tw) {
-        tw.to({ rotation: 10 }, 999, egret.Ease.backInOut);
-        tw.to({ rotation: -10 }, 999, egret.Ease.backInOut)
-            .call(this.gameNameAnim.bind(this, tw));
+            mask.dispatchEvent(new egret.Event('close'));
+        }, closeAbout);
+        mask.addChild(aboutView);
+        return mask;
     };
     return Menu;
 }(egret.Sprite));
 __reflect(Menu.prototype, "Menu", ["MenuInter"]);
-//# sourceMappingURL=Menu.js.map

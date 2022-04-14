@@ -41,6 +41,7 @@ var LoadingUI = (function (_super) {
     function LoadingUI() {
         var _this = _super.call(this) || this;
         _this.createView();
+        SoundManager.getInstance();
         return _this;
     }
     LoadingUI.prototype.createView = function () {
@@ -57,4 +58,3 @@ var LoadingUI = (function (_super) {
     return LoadingUI;
 }(egret.Sprite));
 __reflect(LoadingUI.prototype, "LoadingUI", ["RES.PromiseTaskReporter"]);
-//# sourceMappingURL=LoadingUI.js.map

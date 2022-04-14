@@ -142,6 +142,11 @@ class Rank extends eui.Group {
     public load(){
         this.scroller.viewport.scrollV = 0
         Loading.getInstance().show();
+        if(IS_LOCAL){
+            this.list.dataProvider = new eui.ArrayCollection([]);
+            Loading.getInstance().hide();
+            return
+        }
         this.getRankList().then(res=>{
             if(res.success){
                 this.list.dataProvider = new eui.ArrayCollection(res.data.ranks.map( (i,index)=> ({ rank:index+1,...i }) ));
