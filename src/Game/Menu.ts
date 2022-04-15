@@ -92,7 +92,7 @@ class Menu extends egret.Sprite implements MenuInter{
         rankBtn.textColor = 0x000000;
         rankBtn.touchEnabled = true;
         buttons.addChild(rankBtn);
-        musicBtn.size = 35;
+        rankBtn.size = 35;
         rankBtn.width =  400;
         rankBtn.text = '排行榜';
         rankBtn.y = 260;
